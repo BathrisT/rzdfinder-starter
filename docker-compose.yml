@@ -1,0 +1,80 @@
+version: "3.8"
+services:
+
+  tg_bot:
+    build: https://${GITHUB__USER}:${GITHUB__ACCESS_TOKEN}@github.com/${GITHUB__TG_BOT_REPO}.git
+    environment:
+      - DATABASE__HOST=postgres_service
+      - DATABASE__PORT=${DATABASE__PORT}
+      - DATABASE__USER=${DATABASE__USER}
+      - DATABASE__PASSWORD=${DATABASE__PASSWORD}
+      - DATABASE__NAME=${DATABASE__NAME}
+
+      - REDIS__HOST=redis_service
+      - REDIS__PORT=${REDIS__PORT}
+      - REDIS__PASSWORD=${REDIS__PASSWORD}
+
+      - TG_BOT__TOKEN=${TG_BOT__TOKEN}
+      - TG_BOT__USERNAME=${TG_BOT__USERNAME}
+
+      - LINKS__REVIEWS_LINK=${LINKS__REVIEWS_LINK}
+      - LINKS__CHANNEL_LINK=${LINKS__CHANNEL_LINK}
+      - LINKS__SUPPORT_LINK=${LINKS__SUPPORT_LINK}
+
+      - PAYMENT__PROVIDER_TOKEN=${PAYMENT__PROVIDER_TOKEN}
+
+      - SERVICE_NOTIFICATIONS__BOT_TOKEN=${SERVICE_NOTIFICATIONS__BOT_TOKEN}
+      - SERVICE_NOTIFICATIONS__CHAT_ID=${SERVICE_NOTIFICATIONS__CHAT_ID}
+      - SERVICE_NOTIFICATIONS__PROJECT_NAME=${SERVICE_NOTIFICATIONS__PROJECT_NAME}
+    restart: always
+    command: bash -c 'poetry run python -m alembic upgrade head; cd ./app; poetry run python main.py'
+
+  bg_worker:
+    build: https://${GITHUB__USER}:${GITHUB__ACCESS_TOKEN}@github.com/${GITHUB__TG_BOT_REPO}.git
+    environment:
+      - DATABASE__HOST=postgres_service
+      - DATABASE__PORT=${DATABASE__PORT}
+      - DATABASE__USER=${DATABASE__USER}
+      - DATABASE__PASSWORD=${DATABASE__PASSWORD}
+      - DATABASE__NAME=${DATABASE__NAME}
+
+      - REDIS__HOST=redis_service
+      - REDIS__PORT=${REDIS__PORT}
+      - REDIS__PASSWORD=${REDIS__PASSWORD}
+
+      - TG_BOT__TOKEN=${TG_BOT__TOKEN}
+      - TG_BOT__USERNAME=${TG_BOT__USERNAME}
+
+      - LINKS__REVIEWS_LINK=${LINKS__REVIEWS_LINK}
+      - LINKS__CHANNEL_LINK=${LINKS__CHANNEL_LINK}
+      - LINKS__SUPPORT_LINK=${LINKS__SUPPORT_LINK}
+
+      - PAYMENT__PROVIDER_TOKEN=${PAYMENT__PROVIDER_TOKEN}
+
+      - SERVICE_NOTIFICATIONS__BOT_TOKEN=${SERVICE_NOTIFICATIONS__BOT_TOKEN}
+      - SERVICE_NOTIFICATIONS__CHAT_ID=${SERVICE_NOTIFICATIONS__CHAT_ID}
+      - SERVICE_NOTIFICATIONS__PROJECT_NAME=${SERVICE_NOTIFICATIONS__PROJECT_NAME}
+    restart: always
+    command: bash -c 'poetry run python -m alembic upgrade head; cd ./app; poetry run python background_worker.py'
+
+  redis_service:
+    image: redis:6.2-alpine
+    expose:
+      - ${REDIS__PORT}
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS__PASSWORD}
+    restart: always
+
+  postgres_service:
+    image: postgres:14.3-alpine
+    expose:
+      - 5432
+    ports:
+      - ${DATABASE__PORT}:5432
+    environment:
+      - POSTGRES_USER=${DATABASE__USER}
+      - POSTGRES_PASSWORD=${DATABASE__PASSWORD}
+      - POSTGRES_DB=${DATABASE__NAME}
+      - PGDATA=/data/postgres
+    restart: always
+    volumes:
+      - ./pgdata:/data/postgres
