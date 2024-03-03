@@ -30,7 +30,7 @@ services:
     command: bash -c 'poetry run python -m alembic upgrade head; cd ./app; poetry run python main.py'
 
   bg_worker:
-    build: https://${GITHUB__USER}:${GITHUB__ACCESS_TOKEN}@github.com/${GITHUB__TG_BOT_REPO}.git
+    build: https://${GITHUB__USER}:${GITHUB__ACCESS_TOKEN}@github.com/BathrisT/${GITHUB__TG_BOT_REPO}.git
     environment:
       - DATABASE__HOST=postgres_service
       - DATABASE__PORT=${DATABASE__PORT}
